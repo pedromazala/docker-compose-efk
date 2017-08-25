@@ -1,0 +1,47 @@
+version: "3.0"
+services:
+    web:
+        image: nginx:latest
+        ports:
+            - "5601:80"
+        restart: always
+        volumes:
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+            - ./nginx/log/:/var/log/nginx/
+
+            - ./nginx/passwords/:/etc/nginx/passwords
+
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+
+            - ../:/var/www/html
+        networks:
+            - log
+
+    elasticsearch:
+        image: elasticsearch
+        expose:
+            - 9200
+        restart: always
+        environment:
+            ES_JAVA_OPTS: "-Xms750m -Xmx750m"
+        volumes:
+          - ./elasticsearch/data:/usr/share/elasticsearch/data
+        networks:
+            - log
+    fluentd:
+        build: ./fluentd
+        volumes:
+            - ./fluentd/conf:/fluentd/etc
+        restart: always
+        networks:
+            - log
+    kibana:
+        image: kibana
+        depends_on:
+            - "elasticsearch"
+        restart: always
+        networks:
+            - log
+networks:
+    log:
